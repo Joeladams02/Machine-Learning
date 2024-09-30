@@ -1,0 +1,59 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import torch
+
+from Network import Net
+
+DEVICE = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+
+def grad(outputs, inputs):
+    """Computes the partial derivative of 
+    an output with respect to an input.
+    Args:
+        outputs: (N, 1) tensor
+        inputs: (N, D) tensor
+    """
+    return torch.autograd.grad(
+        outputs, inputs, grad_outputs=torch.ones_like(outputs), create_graph=True
+    )
+
+def PINN_loss(model):
+    x = torch.linspace(0, 10, steps = 1000).view(-1,1).requires_grad_(True).to(DEVICE)
+    y = model.forward(x)
+    dy1 = grad(y, x)[0]
+    dy2 = grad(dy1, x)[0]
+    #pde = dy2 + 0.4*dy1 + 1.04*y
+    pde = dy2 + 4*y
+    
+    return torch.mean(pde**2)
+
+
+x = np.linspace(0,10, 11)
+#data = np.exp(-0.2*x)*np.cos(2*x) + 0.02*np.random.randn(11)
+data = np.cos(2*x) + 0.1*np.random.randn(11)
+# Manufactured data points w error
+
+net = Net(
+    in_dim = 1,
+    hidden_dim = 100,
+    out_dim = 1,
+    epochs = 5000,
+    loss_rate = 0.0001,
+    PINN_loss = PINN_loss,
+    PINN_weight = 10
+    ).to(DEVICE)
+
+
+
+losses = net.fit(x, data) # Train model on 10 data points
+
+x_prime = np.linspace(-1,12,1301) 
+predictions = net.predict(x_prime) # Predict a smooth output line
+
+
+plt.plot(x_prime, predictions)
+plt.scatter(x, data)
+plt.plot(x_prime,np.exp(-0.2*x_prime)*np.cos(2*x_prime))
+# Plot prediction against real and data points
+
+plt.show()
