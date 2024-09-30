@@ -1,0 +1,71 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+DEVICE = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+#Run on mac's GPU
+
+def np_to_torch(x):
+    n_samples = len(x)
+    return torch.from_numpy(x).to(torch.float).to(DEVICE).reshape(n_samples, -1)
+
+
+class Net(nn.Module):
+    
+    def __init__(self, in_dim, hidden_dim, out_dim, epochs, loss_rate, PINN_loss, PINN_weight):
+        super().__init__() # Allow nn.Module to initialise properly
+
+        self.loss_rate = loss_rate
+        self.epochs = epochs
+        self.PINN_loss = PINN_loss
+        self.PINN_weight = PINN_weight
+        
+        self.layers = nn.Sequential(
+            nn.Linear(in_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU()
+        ) # Defines model architecture
+        
+        self.out = nn.Linear(hidden_dim, out_dim)
+
+
+    def forward(self, x):
+        # Takes input x of size in_dim and applies the nn.
+        # Outputs out of size out_dim
+
+        h = self.layers(x)
+        out = self.out(h)
+        return out
+
+
+    def fit(self, X, Y):
+        X = np_to_torch(X)
+        Y = np_to_torch(Y)
+
+        optimiser = optim.Adam(self.parameters(), lr = self.loss_rate) # Parameters inherited from nn.Module
+        
+        self.train() # Enter training mode
+        
+        for epoch in range(self.epochs):
+            optimiser.zero_grad() # Set gradients to zero
+            output = self.forward(X) # Complete forward pass
+            loss = nn.MSELoss()(Y, output) # Calculate loss
+            if self.PINN_loss:
+                loss += self.PINN_weight*self.PINN_loss(self)
+                # If a PINN_loss is given, it will apply it to the orginal data loss
+                
+            loss.backward() # Backward pass
+            optimiser.step() # Update weights
+
+        
+            if epoch % 1000 == 0:
+                print(f"Epoch {epoch}/{self.epochs}, loss: {loss.item():.2f}") # Print selection of losses
+
+        return loss.item()
+
+    def predict(self, X):
+        self.eval() #Enter evaluation mode
+        out = self.forward(np_to_torch(X))
+        return out.detach().cpu().numpy()
+    
