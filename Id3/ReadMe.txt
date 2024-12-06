@@ -2,4 +2,4 @@ I have been reading through the fantastic book 'The 100 page machine learning bo
 
 It is a fairly fundamental algorithm with no optimisation techniques employed such as backtracking, however with the relative basicness of the data provided i decided it was unnecassary.
 
-Overall, the project has helped me understand fundamental concepts within machine learning such as the informational concept of entropy and information gain that follows from that, as well as the use of both a trainin dataset and then a test dataset.
+Overall, the project has helped me understand fundamental concepts within machine learning such as the informational concept of entropy and information gain that follows from that, as well as the use of both a training dataset and then a test dataset.
