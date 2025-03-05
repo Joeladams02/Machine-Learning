@@ -86,10 +86,12 @@ def accuracy(data, tree, label):
     return 100*correct / data.shape[0], 100*unsure / data.shape[0]
             
 
-Data = pd.read_csv("Congress_data.csv")
+Data = pd.read_csv("Tennis.csv")
 size = Data.shape[0]
 label = Data.columns.values[-1]
 
+print(label)
+'''
 total_entropy = entropy(Data, label)
 
 Id3 = tree(Data, dict(), None, label)
@@ -97,3 +99,4 @@ test_data = pd.read_csv("Congress_data_test.csv")
 correct, unsure = accuracy(test_data, Id3, label)
 print('Model was %.2f%% correct' % correct)
 print('Model was %.2f%% indeterminate' % unsure)
+'''
